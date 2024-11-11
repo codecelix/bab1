@@ -1,0 +1,112 @@
+import 'dart:async';
+
+// Enum Role dengan nilai Admin dan Customer
+enum Role { Admin, Customer }
+
+// Kelas Produk
+class Product {
+  final String namaProduk;
+  final double harga;
+  final bool tersedia;
+
+  Product(this.namaProduk, this.harga, this.tersedia);
+}
+
+// Kelas dasar Pengguna
+abstract class User {
+  final String nama;
+  final int usia;
+  List<Product> produk = []; // Inisialisasi produk sebagai daftar kosong
+  Role? role;
+
+  User(this.nama, this.usia, this.role);
+
+  void tampilkanProduk() {
+    print('$nama\'s Daftar Produk:');
+    if (produk.isNotEmpty) {
+      for (var item in produk) {
+        print('- ${item.namaProduk} (\$${item.harga})');
+      }
+    } else {
+      print('Tidak ada produk yang tersedia.');
+    }
+  }
+}
+
+// Subkelas AdminUser  dengan kemampuan untuk menambah atau menghapus produk
+class AdminUser  extends User {
+  AdminUser (String nama, int usia) : super(nama, usia, Role.Admin);
+
+  void tambahProduk(Product produk) {
+    if (produk.tersedia) {
+      this.produk.add(produk);
+      print('Produk "${produk.namaProduk}" ditambahkan.');
+    } else {
+      throw Exception('Kesalahan: Tidak dapat menambahkan "${produk.namaProduk}", produk tidak tersedia.');
+    }
+  }
+
+  void hapusProduk(Product produk) {
+    if (this.produk.contains(produk)) {
+      this.produk.remove(produk);
+      print('Produk "${produk.namaProduk}" dihapus.');
+    } else {
+      print('Produk "${produk.namaProduk}" tidak ditemukan dalam daftar.');
+    }
+  }
+}
+
+// Subkelas CustomerUser  yang hanya dapat melihat produk
+class CustomerUser  extends User {
+  CustomerUser (String nama, int usia) : super(nama, usia, Role.Customer);
+}
+
+// Fungsi untuk mensimulasikan pengambilan detail produk secara asinkron
+Future<void> ambilDetailProduk() async {
+  print('Mengambil detail produk...');
+  await Future.delayed(Duration(seconds: 2));
+  print('Detail produk telah diambil.');
+}
+
+void main() async {
+  // Contoh produk
+  var produk1 = Product('Laptop', 1200.0, true);
+  var produk2 = Product('Smartphone', 800.0, false);
+  var produk3 = Product('Headphones', 150.0, true);
+
+  // Peta untuk menyimpan produk berdasarkan nama untuk akses cepat
+  Map<String, Product> katalogProduk = {
+    'Laptop': produk1,
+    'Smartphone': produk2,
+    'Headphones': produk3,
+  };
+
+  // Membuat pengguna
+  var admin = AdminUser ('Alice', 30);
+  var customer = CustomerUser ('Bob', 25);
+
+  // Admin mencoba menambahkan produk ke daftar mereka
+  try {
+    admin.tambahProduk(produk1); // Tersedia, harus ditambahkan
+    admin.tambahProduk(produk2); // Tidak tersedia, harus melempar kesalahan
+    admin.tambahProduk(produk3); // Tersedia, harus ditambahkan
+  } catch (e) {
+    print('Kesalahan ditangkap: $e');
+  }
+
+  // Customer mencoba melihat produk
+  customer.tampilkanProduk(); // Harus menunjukkan "Tidak ada produk yang tersedia."
+  
+  // Admin melihat produk
+  admin.tampilkanProduk();
+
+  // Mengambil detail produk secara asinkron
+  await ambilDetailProduk();
+
+  // Menggunakan Set untuk mencegah penambahan produk duplikat
+  Set<Product> produkUnik = {produk1, produk3, produk1}; // Mencoba menambahkan duplikat
+  print('Produk unik dalam Set:');
+  for (var item in produkUnik) {
+    print('- ${item.namaProduk}');
+  }
+}
